@@ -1,0 +1,24 @@
+# Test configuration for LVM RAID without integrity
+#
+# Same as test-lvmraid-debian but with LVMRAIDINTEGRITY=0
+
+DRIVE1 /dev/sda
+DRIVE2 /dev/sdb
+
+SWRAID 1
+SWRAIDLEVEL 1
+
+LVMRAID 1
+LVMRAIDLEVEL 1
+LVMRAIDINTEGRITY 0
+
+BOOTLOADER grub
+HOSTNAME test-lvmraid-nointegrity
+
+PART /boot ext3 10G
+PART lvm space all
+
+LV space root / ext4 256G
+LV space swap swap swap 16G
+
+IMAGE /root/images/Debian-stable-amd64-base.tar.gz

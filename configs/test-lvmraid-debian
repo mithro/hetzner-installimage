@@ -1,0 +1,32 @@
+# Test configuration for LVM RAID with integrity
+#
+# This creates:
+# - /boot as mdadm RAID1 (10GB)
+# - LVM VG spanning both drives without partition-level RAID
+# - Root LV as LVM RAID1 with integrity (256GB)
+# - Swap LV as LVM RAID1 with integrity (16GB)
+
+DRIVE1 /dev/sda
+DRIVE2 /dev/sdb
+
+# Enable mdadm for /boot
+SWRAID 1
+SWRAIDLEVEL 1
+
+# Enable LVM RAID with integrity
+LVMRAID 1
+LVMRAIDLEVEL 1
+LVMRAIDINTEGRITY 1
+
+BOOTLOADER grub
+HOSTNAME test-lvmraid
+
+# Partitions
+PART /boot ext3 10G
+PART lvm space all
+
+# Logical Volumes with LVM RAID
+LV space root / ext4 256G
+LV space swap swap swap 16G
+
+IMAGE /root/images/Debian-stable-amd64-base.tar.gz
