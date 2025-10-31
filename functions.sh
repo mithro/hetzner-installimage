@@ -2573,8 +2573,21 @@ make_lvm() {
         fi
       fi
 
-      debug "# Creating LV $vg/$lv ($size MiB)"
-      lvcreate --yes --name $lv --size $size $vg 2>&1 | debugoutput
+      # Create LV with or without RAID
+      if [ "$LVMRAID" -eq "1" ]; then
+        local mirrors=$((COUNT_DRIVES - 1))
+        local raid_opts="--type raid${LVMRAIDLEVEL} -m ${mirrors}"
+
+        if [ "$LVMRAIDINTEGRITY" -eq "1" ]; then
+          raid_opts="$raid_opts --raidintegrity y"
+        fi
+
+        debug "# Creating LV $vg/$lv ($size MiB) with RAID options: $raid_opts"
+        lvcreate --yes $raid_opts --name $lv --size ${size}M $vg 2>&1 | debugoutput
+      else
+        debug "# Creating LV $vg/$lv ($size MiB)"
+        lvcreate --yes --name $lv --size ${size}M $vg 2>&1 | debugoutput
+      fi
       test $? -eq 0 || return 1
     done
 
