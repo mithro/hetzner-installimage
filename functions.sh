@@ -2346,6 +2346,8 @@ make_swraid() {
       # Skip LVM partitions when LVMRAID is enabled
       if [[ "$LVMRAID" -eq "1" && -n "$(echo "$line" | grep "LVM")" ]]; then
         debug "# Skipping mdadm for LVM partition (LVMRAID enabled)"
+        # Write the line to fstab unchanged (no /dev/md transformation)
+        echo "$line" >> $fstab
         continue
       fi
 
