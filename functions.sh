@@ -792,6 +792,19 @@ if [ -n "$1" ]; then
   SWRAIDLEVEL="$(grep -m1 -e ^SWRAIDLEVEL "$1" | awk '{ print $2 }')"
   [ "$SWRAIDLEVEL" = "" ] && SWRAIDLEVEL="1"
 
+  # LVM RAID configuration
+  LVMRAID="$(grep -m1 -e ^LVMRAID "$1" | awk '{print $2}')"
+  [ "$LVMRAID" = "" ] && LVMRAID="0"
+
+  LVMRAIDLEVEL="$(grep -m1 -e ^LVMRAIDLEVEL "$1" | awk '{print $2}')"
+  [ "$LVMRAIDLEVEL" = "" ] && LVMRAIDLEVEL="1"
+
+  LVMRAIDINTEGRITY="$(grep -m1 -e ^LVMRAIDINTEGRITY "$1" | awk '{print $2}')"
+  [ "$LVMRAIDINTEGRITY" = "" ] && LVMRAIDINTEGRITY="0"
+
+  # Export for use in other functions
+  export LVMRAID LVMRAIDLEVEL LVMRAIDINTEGRITY
+
   PARTS_SUM_SIZE="0"
   PART_COUNT="$(grep -c -e '^PART' "$1")"
   PART_LINES="$(grep -e '^PART ' "$1")"
