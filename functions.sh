@@ -2477,16 +2477,40 @@ make_lvm() {
       fi
     done < <(pvs -o pv_name,vg_name --noheadings 2> /dev/null)
 
-    # Read the lines from fstab
+    # Read the lines from fstab and create PVs
     inc_dev=1
     while read -r line; do
       if [ -n "$(echo "$line" | grep "LVM")" ]; then
-        pv="$(echo "$line" | grep "LVM" | awk '{print $2}')"
-        dev[$inc_dev]="$pv"
+        vg_name="$(echo "$line" | grep "LVM" | awk '{print $2}')"
+        partnum="$(echo "$line" | grep "LVM" | awk '{print $1}' | rev | cut -c1)"
+
+        # When LVMRAID is enabled, create PVs on all drives
+        if [ "$LVMRAID" -eq "1" ]; then
+          pv_list=""
+          for n in $(seq 1 $COUNT_DRIVES); do
+            TARGETDISK="$(eval echo \$DRIVE${n})"
+            local p; p=""
+            local nvme; nvme="$(echo $TARGETDISK | grep nvme)"
+            [ -n "$nvme" ] && p='p'
+            local disk_by; disk_by="$(echo $TARGETDISK | grep '^/dev/disk/by-')"
+            [ -n "$disk_by" ] && p='-part'
+
+            pv_device="$TARGETDISK$p$partnum"
+            debug "# Creating PV $pv_device for VG $vg_name"
+            wipefs -af $pv_device |& debugoutput
+            pvcreate -ff $pv_device 2>&1 | debugoutput
+            pv_list="$pv_list $pv_device"
+          done
+          dev[$inc_dev]="$pv_list"
+        else
+          # Original single PV behavior
+          pv="$(echo "$line" | grep "LVM" | awk '{print $2}')"
+          dev[$inc_dev]="$pv"
+          debug "# Creating PV $pv"
+          wipefs -af $pv |& debugoutput
+          pvcreate -ff $pv 2>&1 | debugoutput
+        fi
         inc_dev=$(( ${inc_dev} + 1 ))
-        debug "# Creating PV $pv"
-        wipefs -af $pv |& debugoutput
-        pvcreate -ff $pv 2>&1 | debugoutput
       fi
     done < $fstab
 
