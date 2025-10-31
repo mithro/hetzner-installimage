@@ -2343,6 +2343,12 @@ make_swraid() {
     fi
 
     while read line ; do
+      # Skip LVM partitions when LVMRAID is enabled
+      if [[ "$LVMRAID" -eq "1" && -n "$(echo "$line" | grep "LVM")" ]]; then
+        debug "# Skipping mdadm for LVM partition (LVMRAID enabled)"
+        continue
+      fi
+
       PARTNUM="$(next_partnum $count)"
       echo "Line is: \"$line\"" | debugoutput
       # If multiple ESPs are supported by grub-efi-amd64, a workaround for the fstab is necessary in order to create the RAID array correctly
