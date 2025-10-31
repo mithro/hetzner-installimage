@@ -2530,16 +2530,16 @@ make_lvm() {
     # create VGs
     for i in $(seq 1 $LVM_VG_COUNT) ; do
       vg=${LVM_VG_NAME[$i]}
-      pv=${dev[${i}]}
+      pvs=${dev[${i}]}  # May be space-separated list when LVMRAID=1
 
       # extend the VG if a VG with the same name already exists
       if [ "$(vgs --noheadings 2>/dev/null | grep "$vg")" ]; then
-        debug "# Extending VG $vg with PV $pv"
-        vgextend $vg $pv 2>&1 | debugoutput
+        debug "# Extending VG $vg with PV(s) $pvs"
+        vgextend $vg $pvs 2>&1 | debugoutput
       else
-        debug "# Creating VG $vg with PV $pv"
+        debug "# Creating VG $vg with PV(s) $pvs"
         [ "$vg" ] && rm -rf "/dev/$vg" 2>&1 | debugoutput
-        vgcreate $vg $pv 2>&1 | debugoutput
+        vgcreate $vg $pvs 2>&1 | debugoutput
       fi
     done
 
