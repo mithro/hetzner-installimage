@@ -2051,7 +2051,12 @@ create_partitions() {
      SFDISKTYPE="8e"
    fi
    if [[ "$SWRAID" -eq "1" && "${PART_FS[$i]}" != "esp" ]]; then
-     SFDISKTYPE="fd"
+     # Skip setting raid type for LVM partitions when LVMRAID is enabled
+     if [[ "$LVMRAID" -eq "1" && "${PART_MOUNT[$i]}" = "lvm" ]]; then
+       SFDISKTYPE="8e"  # Regular LVM type, not RAID
+     else
+       SFDISKTYPE="fd"  # RAID type for other partitions
+     fi
    fi
 
    if [ "$(echo ${PART_SIZE[$i]} |tr [:upper:] [:lower:])" = "all" ]; then
