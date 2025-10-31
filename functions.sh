@@ -2481,8 +2481,12 @@ make_lvm() {
     inc_dev=1
     while read -r line; do
       if [ -n "$(echo "$line" | grep "LVM")" ]; then
-        vg_name="$(echo "$line" | grep "LVM" | awk '{print $2}')"
-        partnum="$(echo "$line" | grep "LVM" | awk '{print $1}' | rev | cut -c1)"
+        # Extract device path from column 2
+        device="$(echo "$line" | awk '{print $2}')"
+        # Extract partition number from end of device path
+        partnum="$(echo "$device" | grep -o '[0-9]*$')"
+        # Extract VG name from single-quoted string
+        vg_name="$(echo "$line" | sed "s/.*'\(.*\)'.*/\1/")"
 
         # When LVMRAID is enabled, create PVs on all drives
         if [ "$LVMRAID" -eq "1" ]; then
