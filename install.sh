@@ -413,6 +413,22 @@ else
 fi
 status_done
 
+# Fetch and copy SSH keys BEFORE generating ramdisk
+# This ensures dropbear-initramfs can include them in the initramfs
+if [ -n "$OPT_SSHKEYS_URL" ] ; then
+    status_busy_nostep "  Fetching SSH keys"
+    debug "# Fetch public SSH keys"
+    fetch_ssh_keys "$OPT_SSHKEYS_URL"
+    status_donefailed $?
+fi
+
+if [ "$OPT_USE_SSHKEYS" = "1" ] ; then
+    status_busy_nostep "  Copying SSH keys"
+    debug "# Adding public SSH keys"
+    copy_ssh_keys
+    status_donefailed $?
+fi
+
 status_busy_nostep "  Generating ramdisk"
 debug "# Generating ramdisk"
 generate_new_ramdisk "NIL" || status_failed
@@ -435,17 +451,11 @@ status_done
 
 
 #
-# Set root password and/or install ssh keys
+# Set root password and/or configure SSH authentication
+# Note: SSH keys were already copied earlier before ramdisk generation
 #
 inc_step
 status_none "Configuring authentication"
-
-if [ -n "$OPT_SSHKEYS_URL" ] ; then
-    status_busy_nostep "  Fetching SSH keys"
-    debug "# Fetch public SSH keys"
-    fetch_ssh_keys "$OPT_SSHKEYS_URL"
-    status_donefailed $?
-fi
 
 if [ "$OPT_USE_SSHKEYS" = "1" -a -z "$FORCE_PASSWORD" ]; then
   status_busy_nostep "  Disabling root password"
@@ -464,13 +474,6 @@ else
   status_busy_nostep "  Enabling SSH root login with password"
   set_ssh_rootlogin "yes"
   status_donefailed $?
-fi
-
-if [ "$OPT_USE_SSHKEYS" = "1" ] ; then
-    status_busy_nostep "  Copying SSH keys"
-    debug "# Adding public SSH keys"
-    copy_ssh_keys
-    status_donefailed $?
 fi
 
 #
