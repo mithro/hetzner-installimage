@@ -52,6 +52,16 @@ generate_new_ramdisk() {
     # Install and configure dropbear for initramfs SSH debugging
     debug "# Installing dropbear-initramfs for early boot SSH access"
 
+    # Verify DNS works inside chroot before attempting package installation
+    debug "# Verifying DNS resolution inside chroot environment"
+    if ! execute_chroot_command "getent hosts deb.debian.org > /dev/null 2>&1"; then
+      debug "# ERROR: DNS resolution not working inside chroot"
+      debug "# Cannot resolve deb.debian.org from chroot environment"
+      debug "# Check that /etc/resolv.conf is properly configured in rescue system"
+      return 1
+    fi
+    debug "# DNS resolution working inside chroot"
+
     # Update apt cache to ensure package lists are current
     execute_chroot_command "apt-get update" || return 1
 
