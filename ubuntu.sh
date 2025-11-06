@@ -59,6 +59,10 @@ generate_new_ramdisk() {
 
     # Install and configure dropbear for initramfs SSH debugging
     debug "# Installing dropbear-initramfs for early boot SSH access"
+
+    # Update apt cache to ensure package lists are current
+    execute_chroot_command "apt-get update" || return 1
+
     execute_chroot_command "DEBIAN_FRONTEND=noninteractive apt-get install -y dropbear-initramfs" || return 1
 
     debug "# Successfully installed dropbear-initramfs"
