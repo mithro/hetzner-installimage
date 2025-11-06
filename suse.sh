@@ -27,10 +27,19 @@ generate_new_ramdisk() {
   blacklist_unwanted_and_buggy_kernel_modules
   configure_kernel_modules
 
+  # Build driver list based on LVM RAID configuration
+  local drivers="raid0 raid1 raid10 raid456"
+  if [ "$LVMRAIDINTEGRITY" = "1" ]; then
+    drivers+=" dm-integrity dm-raid"
+  elif [ "$LVMRAID" = "1" ]; then
+    drivers+=" dm-raid"
+  fi
+  drivers+=" ext2 ext3 ext4 xfs btrfs vfat"
+
   cat << EOF > "${FOLD}/hdd/etc/dracut.conf.d/99-${C_SHORT}.conf"
 ### ${COMPANY} - installimage
 add_dracutmodules+=" lvm mdraid "
-add_drivers+=" raid0 raid1 raid10 raid456 ext2 ext3 ext4 xfs btrfs vfat "
+add_drivers+=" ${drivers} "
 hostonly="no"
 hostonly_cmdline="no"
 kernel_cmdline="rd.auto rd.auto=1"

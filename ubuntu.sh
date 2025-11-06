@@ -47,6 +47,16 @@ generate_new_ramdisk() {
       echo "dm-crypt" >> "$FOLD/hdd/etc/modules"
     fi
 
+    # Add required modules for LVM RAID with integrity
+    if [ "$LVMRAIDINTEGRITY" = "1" ]; then
+      debug "# Enabling dm-integrity and dm-raid for LVM RAID with integrity"
+      echo "dm-integrity" >> "$FOLD/hdd/etc/modules"
+      echo "dm-raid" >> "$FOLD/hdd/etc/modules"
+    elif [ "$LVMRAID" = "1" ]; then
+      debug "# Enabling dm-raid for LVM RAID"
+      echo "dm-raid" >> "$FOLD/hdd/etc/modules"
+    fi
+
     # just make sure that we do not accidentally try to install a bootloader
     # when we haven't configured grub yet
     if [[ -e "$FOLD/hdd/etc/kernel-img.conf" ]]; then

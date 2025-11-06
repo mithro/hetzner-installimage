@@ -39,6 +39,16 @@ generate_new_ramdisk() {
     blacklist_unwanted_and_buggy_kernel_modules
     configure_kernel_modules
 
+    # Add required modules for LVM RAID with integrity
+    if [ "$LVMRAIDINTEGRITY" = "1" ]; then
+      debug "# Enabling dm-integrity and dm-raid for LVM RAID with integrity"
+      echo "dm-integrity" >> "$FOLD/hdd/etc/modules"
+      echo "dm-raid" >> "$FOLD/hdd/etc/modules"
+    elif [ "$LVMRAID" = "1" ]; then
+      debug "# Enabling dm-raid for LVM RAID"
+      echo "dm-raid" >> "$FOLD/hdd/etc/modules"
+    fi
+
     # apparently sometimes the mdadm assembly bugfix introduced with the recent mdadm release does not work
     # however, the problem is limited to H8SGL boards
     # see https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=784070

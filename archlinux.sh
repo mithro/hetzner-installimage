@@ -235,6 +235,16 @@ generate_new_ramdisk() {
     fi
   done
   sed -i "s/^HOOKS=.*/HOOKS=(${hooks[*]})/" "$mkinitcpio_conf" |& debugoutput || return 1
+
+  # Add required modules for LVM RAID with integrity
+  if [ "$LVMRAIDINTEGRITY" = "1" ]; then
+    debug "# Adding dm-integrity and dm-raid modules for LVM RAID with integrity"
+    sed -i 's/^MODULES=(\(.*\))/MODULES=(\1 dm-integrity dm-raid)/' "$mkinitcpio_conf" |& debugoutput || return 1
+  elif [ "$LVMRAID" = "1" ]; then
+    debug "# Adding dm-raid module for LVM RAID"
+    sed -i 's/^MODULES=(\(.*\))/MODULES=(\1 dm-raid)/' "$mkinitcpio_conf" |& debugoutput || return 1
+  fi
+
   diff -Naur "$mkinitcpio_conf_bak" "$mkinitcpio_conf" | debugoutput
   execute_chroot_command 'mkinitcpio -p linux'
 }
