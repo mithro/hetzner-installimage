@@ -361,6 +361,14 @@ setup_network_config
 status_donefailed $?
 
 #
+# Verify DNS connectivity
+#
+status_busy_nostep "  Verifying DNS connectivity"
+debug "# Verifying DNS connectivity for package installation"
+verify_dns_connectivity || status_failed
+status_done
+
+#
 # chroot commands
 #
 inc_step

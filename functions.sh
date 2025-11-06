@@ -3077,6 +3077,35 @@ generate_resolvconf() {
   return 0
 }
 
+# verify_dns_connectivity
+#
+# Verify that DNS resolution is working in the rescue system before
+# attempting package installations that require network access.
+# This catches DNS failures early with a clear error message.
+#
+verify_dns_connectivity() {
+  debug "# Verifying DNS connectivity"
+
+  # Test hostnames that will be needed for package installation
+  local test_hosts=("deb.debian.org" "mirror.hetzner.com" "security.debian.org")
+
+  for host in "${test_hosts[@]}"; do
+    debug "# Testing DNS resolution for $host"
+    if getent hosts "$host" &>/dev/null; then
+      debug "# Successfully resolved $host"
+      return 0
+    fi
+  done
+
+  # All DNS tests failed
+  debug "# ERROR: DNS resolution is not working"
+  debug "# Cannot resolve any of: ${test_hosts[*]}"
+  debug "# Please check network connectivity in rescue system"
+  debug "# Check /etc/resolv.conf for valid nameservers"
+
+  return 1
+}
+
 # set_hostname "HOSTNAME"
 set_hostname() {
   local hostname="$1"
