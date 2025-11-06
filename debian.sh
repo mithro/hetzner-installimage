@@ -44,9 +44,13 @@ generate_new_ramdisk() {
       debug "# Enabling dm-integrity and dm-raid for LVM RAID with integrity"
       echo "dm-integrity" >> "$FOLD/hdd/etc/modules"
       echo "dm-raid" >> "$FOLD/hdd/etc/modules"
+      # Also add to initramfs-tools modules to ensure they're in initramfs
+      echo "dm-integrity" >> "$FOLD/hdd/etc/initramfs-tools/modules"
+      echo "dm-raid" >> "$FOLD/hdd/etc/initramfs-tools/modules"
     elif [ "$LVMRAID" = "1" ]; then
       debug "# Enabling dm-raid for LVM RAID"
       echo "dm-raid" >> "$FOLD/hdd/etc/modules"
+      echo "dm-raid" >> "$FOLD/hdd/etc/initramfs-tools/modules"
     fi
 
     # Install and configure dropbear for initramfs SSH debugging
