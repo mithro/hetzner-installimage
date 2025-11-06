@@ -361,14 +361,6 @@ setup_network_config
 status_donefailed $?
 
 #
-# Verify DNS connectivity
-#
-status_busy_nostep "  Verifying DNS connectivity"
-debug "# Verifying DNS connectivity for package installation"
-verify_dns_connectivity || status_failed
-status_done
-
-#
 # chroot commands
 #
 inc_step
@@ -399,6 +391,28 @@ if [ "$SWRAID" = "1" ]; then
   status_done
 fi
 
+# Set up /etc/resolv.conf BEFORE generating ramdisk
+# This ensures DNS works inside the chroot when apt-get update runs
+status_busy_nostep "  Setting up DNS configuration"
+debug "# Setting up DNS configuration for chroot"
+debug "# Rescue system /etc/resolv.conf contents:"
+cat /etc/resolv.conf 2>&1 | debugoutput
+if [[ "$IAM" == 'ubuntu' ]] && ((IMG_VERSION >= 1804)); then
+  ln -f -s ../run/systemd/resolve/stub-resolv.conf "$FOLD/hdd/etc/resolv.conf"
+else
+  generate_resolvconf || status_failed
+fi
+debug "# Verifying /etc/resolv.conf was created in installed system:"
+if [ -L "$FOLD/hdd/etc/resolv.conf" ]; then
+  debug "# /etc/resolv.conf is a symlink to: $(readlink "$FOLD/hdd/etc/resolv.conf")"
+  debug "# Target file contents:"
+  cat "$FOLD/hdd/etc/resolv.conf" 2>&1 | debugoutput
+else
+  debug "# /etc/resolv.conf contents:"
+  cat "$FOLD/hdd/etc/resolv.conf" 2>&1 | debugoutput
+fi
+status_done
+
 status_busy_nostep "  Generating ramdisk"
 debug "# Generating ramdisk"
 generate_new_ramdisk "NIL" || status_failed
@@ -415,11 +429,7 @@ status_done
 #
 inc_step
 status_busy "Setting up miscellaneous files"
-if [[ "$IAM" == 'ubuntu' ]] && ((IMG_VERSION >= 1804)); then
-  ln -f -s ../run/systemd/resolve/stub-resolv.conf "$FOLD/hdd/etc/resolv.conf"
-else
-  generate_resolvconf || status_failed
-fi
+# DNS configuration already set up earlier before ramdisk generation
 generate_sysctlconf || status_failed
 status_done
 

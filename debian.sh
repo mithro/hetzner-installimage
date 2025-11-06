@@ -52,6 +52,10 @@ generate_new_ramdisk() {
     # Install and configure dropbear for initramfs SSH debugging
     debug "# Installing dropbear-initramfs for early boot SSH access"
 
+    # Debug: Show resolv.conf contents before DNS check
+    debug "# Debugging /etc/resolv.conf in chroot:"
+    execute_chroot_command "cat /etc/resolv.conf" 2>&1 | debugoutput
+
     # Verify DNS works inside chroot before attempting package installation
     debug "# Verifying DNS resolution inside chroot environment"
     if ! execute_chroot_command "getent hosts deb.debian.org > /dev/null 2>&1"; then
