@@ -49,6 +49,36 @@ generate_new_ramdisk() {
       echo "dm-raid" >> "$FOLD/hdd/etc/modules"
     fi
 
+    # Install and configure dropbear for initramfs SSH debugging
+    debug "# Installing dropbear-initramfs for early boot SSH access"
+    execute_chroot_command "DEBIAN_FRONTEND=noninteractive apt-get install -y dropbear-initramfs" || return 1
+
+    debug "# Successfully installed dropbear-initramfs"
+
+    # Verify installation
+    if [ ! -d "$FOLD/hdd/etc/dropbear/initramfs" ]; then
+      debug "# ERROR: dropbear-initramfs installed but /etc/dropbear/initramfs not found"
+      return 1
+    fi
+
+    debug "# Configuring dropbear for initramfs"
+
+    # Copy SSH keys from root user if they exist
+    if [ -f "$FOLD/hdd/root/.ssh/authorized_keys" ]; then
+      mkdir -p "$FOLD/hdd/etc/dropbear/initramfs"
+      cp "$FOLD/hdd/root/.ssh/authorized_keys" "$FOLD/hdd/etc/dropbear/initramfs/authorized_keys" || return 1
+      chmod 600 "$FOLD/hdd/etc/dropbear/initramfs/authorized_keys" || return 1
+      debug "# Copied SSH authorized_keys for dropbear initramfs"
+    else
+      debug "# ERROR: No SSH authorized_keys found at /root/.ssh/authorized_keys"
+      debug "# Cannot configure dropbear without SSH keys"
+      return 1
+    fi
+
+    # Configure dropbear to listen on standard SSH port
+    echo 'DROPBEAR_OPTIONS="-p 22 -s -j -k -I 60"' > "$FOLD/hdd/etc/dropbear/initramfs/dropbear.conf" || return 1
+    debug "# Configured dropbear to listen on port 22"
+
     # apparently sometimes the mdadm assembly bugfix introduced with the recent mdadm release does not work
     # however, the problem is limited to H8SGL boards
     # see https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=784070
